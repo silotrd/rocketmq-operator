@@ -39,7 +39,7 @@ spec:
               description: Topic name
               type: string
             rocketMQName:
-              description: rocketMessageQueue Name
+              description: The name of rocketmq, and the broker and nameserver in the same cluster must be filled with the same name
               type: string
           required:
           - rocketMQName

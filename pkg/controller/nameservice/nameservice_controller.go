@@ -176,9 +176,7 @@ func (r *ReconcileNameService) updateNameServiceStatus(instance *rocketmqv1alpha
 
 	actualKey := instance.Namespace + "-" + instance.Spec.RocketMQName
 	actual, _ := share.GetInstance().LoadOrStore(actualKey, share.ShareItem{})
-	defer func() {
-		share.GetInstance().Store(actualKey, actual)
-	}()
+	defer share.GetInstance().Store(actualKey, actual)
 
 	// Update status.NameServers if needed
 	if !reflect.DeepEqual(hostIps, instance.Status.NameServers) {
