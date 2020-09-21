@@ -124,6 +124,7 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			reqLogger.Info("Broker resource not found. Ignoring since object must be deleted.")
+
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -131,16 +132,26 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
+	actualKey := broker.Namespace + "-" + broker.Spec.RocketMQName
+	actual, _ := share.GetInstance().LoadOrStore(actualKey, share.ShareItem{})
+	defer share.GetInstance().Store(actualKey, actual)
+
 	if broker.Status.Size == 0 {
-		share.GroupNum = broker.Spec.Size
+		actual.GroupNum = broker.Spec.Size
 	} else {
-		share.GroupNum = broker.Status.Size
+		actual.GroupNum = broker.Status.Size
 	}
 
 	if broker.Spec.NameServers == "" {
 		// wait for name server ready when create broker cluster if nameServers is omitted
 		for {
-			if share.IsNameServersStrInitialized {
+			actual, ok := share.GetInstance().Load(actualKey)
+			if !ok {
+				log.Info("Broker Waiting for name server ready1...")
+				time.Sleep(time.Duration(cons.WaitForNameServerReadyInSecond) * time.Second)
+				continue
+			}
+			if actual.IsNameServersStrInitialized {
 				break
 			} else {
 				log.Info("Broker Waiting for name server ready...")
@@ -148,14 +159,14 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 			}
 		}
 	} else {
-		share.NameServersStr = broker.Spec.NameServers
+		actual.NameServersStr = broker.Spec.NameServers
 	}
 
-	share.BrokerClusterName = broker.Name
+	actual.BrokerClusterName = broker.Name
 	replicaPerGroup := broker.Spec.ReplicaPerGroup
-	reqLogger.Info("brokerGroupNum=" + strconv.Itoa(share.GroupNum) + ", replicaPerGroup=" + strconv.Itoa(replicaPerGroup))
-	for brokerGroupIndex := 0; brokerGroupIndex < share.GroupNum; brokerGroupIndex++ {
-		reqLogger.Info("Check Broker cluster " + strconv.Itoa(brokerGroupIndex+1) + "/" + strconv.Itoa(share.GroupNum))
+	reqLogger.Info("brokerGroupNum=" + strconv.Itoa(actual.GroupNum) + ", replicaPerGroup=" + strconv.Itoa(replicaPerGroup))
+	for brokerGroupIndex := 0; brokerGroupIndex < actual.GroupNum; brokerGroupIndex++ {
+		reqLogger.Info("Check Broker cluster " + strconv.Itoa(brokerGroupIndex+1) + "/" + strconv.Itoa(actual.GroupNum))
 		dep := r.getBrokerStatefulSet(broker, brokerGroupIndex, 0)
 		// Check if the statefulSet already exists, if not create a new one
 		found := &appsv1.StatefulSet{}
@@ -189,8 +200,8 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 	// Check for name server scaling
 	if broker.Spec.AllowRestart {
 		// The following code will restart all brokers to update NAMESRV_ADDR env
-		if share.IsNameServersStrUpdated {
-			for brokerGroupIndex := 0; brokerGroupIndex < broker.Spec.Size; brokerGroupIndex++ {
+		if actual.IsNameServersStrUpdated {
+				for brokerGroupIndex := 0; brokerGroupIndex < broker.Spec.Size; brokerGroupIndex++ {
 				brokerName := getBrokerName(broker, brokerGroupIndex)
 				// Update master broker
 				reqLogger.Info("Update Master Broker NAMESRV_ADDR of " + brokerName)
@@ -200,7 +211,7 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 				if err != nil {
 					reqLogger.Error(err, "Failed to get broker master StatefulSet of "+brokerName)
 				} else {
-					found.Spec.Template.Spec.Containers[0].Env[0].Value = share.NameServersStr
+					found.Spec.Template.Spec.Containers[0].Env[0].Value = actual.NameServersStr
 					err = r.client.Update(context.TODO(), found)
 					if err != nil {
 						reqLogger.Error(err, "Failed to update NAMESRV_ADDR of master broker "+brokerName, "StatefulSet.Namespace", found.Namespace, "StatefulSet.Name", found.Name)
@@ -220,7 +231,7 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 					} else {
 						for index := range replicaFound.Spec.Template.Spec.Containers[0].Env {
 							if cons.EnvNameServiceAddress == replicaFound.Spec.Template.Spec.Containers[0].Env[index].Name {
-								replicaFound.Spec.Template.Spec.Containers[0].Env[index].Value = share.NameServersStr
+								replicaFound.Spec.Template.Spec.Containers[0].Env[index].Value = actual.NameServersStr
 								break
 							}
 						}
@@ -235,7 +246,7 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 				}
 			}
 		}
-		share.IsNameServersStrUpdated = false
+		actual.IsNameServersStrUpdated = false
 	}
 
 	// List the pods for this broker's statefulSet
@@ -454,9 +465,13 @@ func (r *ReconcileBroker) getBrokerStatefulSet(broker *rocketmqv1alpha1.Broker, 
 }
 
 func getENV(broker *rocketmqv1alpha1.Broker, replicaIndex int, brokerGroupIndex int)  []corev1.EnvVar {
+
+	actualKey := broker.Namespace + "-" + broker.Spec.RocketMQName
+	actual, _ := share.GetInstance().LoadOrStore(actualKey, share.ShareItem{})
+
 	envs := []corev1.EnvVar{{
 		Name:  cons.EnvNameServiceAddress,
-		Value: share.NameServersStr,
+		Value: actual.NameServersStr,
 	}, {
 		Name:  cons.EnvBrokerId,
 		Value: strconv.Itoa(replicaIndex),

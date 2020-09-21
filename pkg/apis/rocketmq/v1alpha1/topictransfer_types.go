@@ -37,6 +37,7 @@ type TopicTransferSpec struct {
 	SourceCluster string `json:"sourceCluster,omitempty"`
 	// The cluster where the topic will be transferred to
 	TargetCluster string `json:"targetCluster,omitempty"`
+	RocketMQName string `json:"rocketMQName"`
 }
 
 // TopicTransferStatus defines the observed state of TopicTransfer

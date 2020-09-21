@@ -38,6 +38,11 @@ spec:
             topic:
               description: Topic name
               type: string
+            rocketMQName:
+              description: rocketMessageQueue Name
+              type: string
+          required:
+          - rocketMQName
           type: object
         status:
           type: object

@@ -63,6 +63,9 @@ spec:
               items:
                 type: object
               type: array
+            rocketMQName:
+              description: rocketMessageQueue Name
+              type: string
           required:
           - size
           - nameServiceImage
@@ -73,6 +76,7 @@ spec:
           - storageMode
           - hostPath
           - volumeClaimTemplates
+          - rocketMQName
           type: object
         status:
           properties:

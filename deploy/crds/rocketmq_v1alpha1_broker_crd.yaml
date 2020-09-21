@@ -79,6 +79,9 @@ spec:
               items:
                 type: object
               type: array
+            rocketMQName:
+              description: rocketMessageQueue Name
+              type: string
           required:
           - size
           - replicaPerGroup
@@ -93,6 +96,7 @@ spec:
           - volumes
           - volumeClaimTemplates
           - scalePodName
+          - rocketMQName
           type: object
         status:
           properties:
