@@ -134,7 +134,7 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 	actualKey := broker.Namespace + "-" + broker.Spec.RocketMQName
 	actual, _ := share.GetInstance().LoadOrStore(actualKey, share.ShareItem{})
 	defer func() {
-		log.Info("Broker actualKey:" + actualKey + " actual.NameServerStr:" + actual.NameServersStr +
+		reqLogger.Info("Broker actualKey:" + actualKey + " actual.NameServerStr:" + actual.NameServersStr +
 			" actual.BrokerClusterName:" + actual.BrokerClusterName + " IsNameServersStrInitialized:" + strconv.FormatBool(actual.IsNameServersStrInitialized))
 		share.GetInstance().Store(actualKey, actual)
 	}()
@@ -267,14 +267,14 @@ func (r *ReconcileBroker) Reconcile(request reconcile.Request) (reconcile.Result
 	log.Info("podNames length = " + strconv.Itoa(len(podNames)))
 
 	if len(podNames) == 0 {
-		log.Info("Broker podName size is 0, wait for a moment...")
+		reqLogger.Info("Broker podName size is 0, wait for a moment...")
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Duration(cons.RequeueIntervalInSecond) * time.Second}, nil
 	}
 
 	// Ensure every pod is in running phase
 	for _, pod := range podList.Items {
 		if !reflect.DeepEqual(pod.Status.Phase, corev1.PodRunning) {
-			log.Info("pod " + pod.Name + " phase is " + string(pod.Status.Phase) + ", wait for a moment...")
+			reqLogger.Info("pod " + pod.Name + " phase is " + string(pod.Status.Phase) + ", wait for a moment...")
 			return reconcile.Result{Requeue: true, RequeueAfter: time.Duration(cons.RequeueIntervalInSecond) * time.Second}, nil
 		}
 	}
