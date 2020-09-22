@@ -174,12 +174,17 @@ func (r *ReconcileNameService) updateNameServiceStatus(instance *rocketmqv1alpha
 	}
 	hostIps := getNameServers(podList.Items)
 
+	if len(hostIps) == 0 {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Duration(cons.RequeueIntervalInSecond) * time.Second}, nil
+	}
+
 	actualKey := instance.Namespace + "-" + instance.Spec.RocketMQName
 	actual, _ := share.GetInstance().LoadOrStore(actualKey, share.ShareItem{})
 	defer func() {
 		log.Info("NameServer store key:" + actualKey + " actual.NameServersStr:" + actual.NameServersStr + " IsNameServersStrInitialized:" + strconv.FormatBool(actual.IsNameServersStrInitialized))
 		share.GetInstance().Store(actualKey, actual)
 	}()
+
 	// Update status.NameServers if needed
 	// hostIps is empty, instance.Status.NameServers is empty, also not in
 	if !reflect.DeepEqual(hostIps, instance.Status.NameServers) {
