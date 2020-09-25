@@ -65,6 +65,8 @@ type NameServiceSpec struct {
 	PriorityClassName    string                        `json:"priorityClassName,omitempty"`
 	// rocketmq exporter
 	Exporter RocketmqExporter `json:"exporter,omitempty"`
+	// RocketMQ Name, the broker and nameserver in the same cluster must be filled with the same name
+	RocketMQName string `json:"rocketMQName"`
 }
 
 // RocketmqExporter defines the specification for the rocketmq exporter

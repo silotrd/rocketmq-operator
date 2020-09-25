@@ -104,6 +104,9 @@ spec:
             priorityClassName:
               description: Defines priority class's name
               type: string
+            rocketMQName:
+              description: The name of rocketmq, and the broker and nameserver in the same cluster must be filled with the same name
+              type: string
           required:
           - size
           - replicaPerGroup
@@ -118,6 +121,7 @@ spec:
           - volumes
           - volumeClaimTemplates
           - scalePodName
+          - rocketMQName
           type: object
         status:
           properties:

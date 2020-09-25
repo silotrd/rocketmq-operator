@@ -70,7 +70,8 @@ type BrokerSpec struct {
 	PodAnnotations       map[string]string             `json:"podAnnotations,omitempty"`
 	// PriorityClassName defines priority class's name
 	PriorityClassName    string                        `json:"priorityClassName,omitempty"`
-
+	// RocketMQ Name, the broker and nameserver in the same cluster must be filled with the same name
+	RocketMQName string `json:"rocketMQName"`
 }
 
 // BrokerStatus defines the observed state of Broker
