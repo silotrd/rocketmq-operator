@@ -96,6 +96,51 @@ spec:
     imagePullPolicy: Always
     # hostNetwork can be true or false
     hostNetwork: true
+    podAnnotations:
+      prometheus.io/path: /metrics
+      prometheus.io/port: "5557"
+      prometheus.io/scrape: "true"
+    securityContext:
+      allowPrivilegeEscalation: true
+      runAsUser: 0
+      runAsGroup: 0
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values:
+                    - azure-k8s-7
+                    - azure-k8s-1
+                    - azure-k8s-3
+                    - azure-k8s-2
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - name_service
+              topologyKey: kubernetes.io/hostname
+    priorityClassName: ""
+    imagePullSecrets:
+      - name: registry-secret
+    nodeSelector:
+      azure: "true"
+    tolerations:
+      - key: "key1"
+        operator: "Equal"
+        value: "value1"
+        effect: "NoSchedule"
+      - key: "key2"
+        operator: "Equal"
+        value: "value2"
+        effect: "NoExecute"
     #  Set DNS policy for the pod.
     #  Defaults to "ClusterFirst".
     #  Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'.

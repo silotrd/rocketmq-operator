@@ -60,3 +60,7 @@ func (singleton *Singleton) Store(key string, value ShareItem) {
 func (singleton *Singleton) LoadOrStore(key string, value ShareItem) (actual ShareItem, loaded bool){
 	return singleton.itemSyncMap.LoadOrStore(key, value)
 }
+
+func (singleton *Singleton) Delete(key string) {
+	singleton.itemSyncMap.Delete(key)
+}

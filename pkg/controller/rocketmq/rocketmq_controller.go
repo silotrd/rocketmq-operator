@@ -22,6 +22,7 @@ import (
 	"context"
 	rocketmqv1alpha1 "github.com/apache/rocketmq-operator/pkg/apis/rocketmq/v1alpha1"
 	cons "github.com/apache/rocketmq-operator/pkg/constants"
+	"github.com/apache/rocketmq-operator/pkg/share"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,6 +104,8 @@ func (r *ReconcileRocketmq) Reconcile(request reconcile.Request) (reconcile.Resu
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
+			actualKey := instance.Namespace + "-" + instance.ObjectMeta.Name
+			share.GetInstance().Delete(actualKey)
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object, requeue the request
@@ -124,13 +127,27 @@ func (r *ReconcileRocketmq) Reconcile(request reconcile.Request) (reconcile.Resu
 		reqLogger.Error(err, "Failed to get rocketmq nameservice.")
 		return reconcile.Result{}, err
 	} else {
-		// Resource NameService will change; Only size nameServiceImage imagePullPolicy can update
+		// Resource NameService will change;
 		if !reflect.DeepEqual(nameServiceSts.Spec.Size, nameServiceFound.Spec.Size) ||
 			!reflect.DeepEqual(nameServiceSts.Spec.NameServiceImage, nameServiceFound.Spec.NameServiceImage) ||
-			!reflect.DeepEqual(nameServiceSts.Spec.ImagePullPolicy, nameServiceFound.Spec.ImagePullPolicy) {
+			!reflect.DeepEqual(nameServiceSts.Spec.ImagePullPolicy, nameServiceFound.Spec.ImagePullPolicy) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.PodAnnotations, nameServiceFound.Spec.PodAnnotations) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.SecurityContext, nameServiceFound.Spec.SecurityContext) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.Affinity, nameServiceFound.Spec.Affinity) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.PriorityClassName, nameServiceFound.Spec.PriorityClassName) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.ImagePullSecrets, nameServiceFound.Spec.ImagePullSecrets) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.NodeSelector, nameServiceFound.Spec.NodeSelector) ||
+			!reflect.DeepEqual(nameServiceSts.Spec.Tolerations, nameServiceFound.Spec.Tolerations) {
 			nameServiceFound.Spec.ImagePullPolicy = nameServiceSts.Spec.ImagePullPolicy
 			nameServiceFound.Spec.NameServiceImage = nameServiceSts.Spec.NameServiceImage
 			nameServiceFound.Spec.Size = nameServiceSts.Spec.Size
+			nameServiceFound.Spec.PodAnnotations = nameServiceSts.Spec.PodAnnotations
+			nameServiceFound.Spec.SecurityContext = nameServiceSts.Spec.SecurityContext
+			nameServiceFound.Spec.Affinity = nameServiceSts.Spec.Affinity
+			nameServiceFound.Spec.PriorityClassName = nameServiceSts.Spec.PriorityClassName
+			nameServiceFound.Spec.ImagePullSecrets = nameServiceSts.Spec.ImagePullSecrets
+			nameServiceFound.Spec.NodeSelector = nameServiceSts.Spec.NodeSelector
+			nameServiceFound.Spec.Tolerations = nameServiceSts.Spec.Tolerations
 			err = r.client.Update(context.TODO(), nameServiceFound)
 			if err != nil {
 				reqLogger.Error(err, "should update nameservice resource", "spec.nameService",
@@ -155,15 +172,29 @@ func (r *ReconcileRocketmq) Reconcile(request reconcile.Request) (reconcile.Resu
 	} else if err != nil {
 		reqLogger.Error(err, "Failed to get rocketmq broker.")
 	} else {
-		// Resource broker will change; Only ReplicaPerGroup Size ImagePullPolicy BrokerImage can update
+		// Resource broker will change;
 		if !reflect.DeepEqual(brokerSts.Spec.ReplicaPerGroup, brokerFound.Spec.ReplicaPerGroup) ||
 			!reflect.DeepEqual(brokerSts.Spec.Size, brokerFound.Spec.Size) ||
 			!reflect.DeepEqual(brokerSts.Spec.ImagePullPolicy, brokerFound.Spec.ImagePullPolicy) ||
-			!reflect.DeepEqual(brokerSts.Spec.BrokerImage, brokerFound.Spec.BrokerImage) {
+			!reflect.DeepEqual(brokerSts.Spec.BrokerImage, brokerFound.Spec.BrokerImage) ||
+			!reflect.DeepEqual(brokerSts.Spec.PodAnnotations, brokerFound.Spec.PodAnnotations) ||
+			!reflect.DeepEqual(brokerSts.Spec.SecurityContext, brokerFound.Spec.SecurityContext) ||
+			!reflect.DeepEqual(brokerSts.Spec.Affinity, brokerFound.Spec.Affinity) ||
+			!reflect.DeepEqual(brokerSts.Spec.PriorityClassName, brokerFound.Spec.PriorityClassName) ||
+			!reflect.DeepEqual(brokerSts.Spec.ImagePullSecrets, brokerFound.Spec.ImagePullSecrets) ||
+			!reflect.DeepEqual(brokerSts.Spec.NodeSelector, brokerFound.Spec.NodeSelector) ||
+			!reflect.DeepEqual(brokerSts.Spec.Tolerations, brokerFound.Spec.Tolerations) {
 			brokerFound.Spec.ReplicaPerGroup = brokerSts.Spec.ReplicaPerGroup
 			brokerFound.Spec.Size = brokerSts.Spec.Size
 			brokerFound.Spec.ImagePullPolicy = brokerSts.Spec.ImagePullPolicy
 			brokerFound.Spec.BrokerImage = brokerSts.Spec.BrokerImage
+			brokerFound.Spec.PodAnnotations = brokerSts.Spec.PodAnnotations
+			brokerFound.Spec.SecurityContext = brokerSts.Spec.SecurityContext
+			brokerFound.Spec.Affinity = brokerSts.Spec.Affinity
+			brokerFound.Spec.PriorityClassName = brokerSts.Spec.PriorityClassName
+			brokerFound.Spec.ImagePullSecrets = brokerSts.Spec.ImagePullSecrets
+			brokerFound.Spec.NodeSelector = brokerSts.Spec.NodeSelector
+			brokerFound.Spec.Tolerations = brokerSts.Spec.Tolerations
 			err = r.client.Update(context.TODO(), brokerFound)
 			if err != nil {
 				reqLogger.Error(err, "should update broker resource", "spec.Broker",
@@ -198,6 +229,7 @@ func (r *ReconcileRocketmq) nameServiceForRocketmq(rocketmq *rocketmqv1alpha1.Ro
 		},
 		Spec: rocketmq.Spec.NameService,
 	}
+	nameService.Spec.RocketMQName = rocketmq.Name
 	controllerutil.SetControllerReference(rocketmq, nameService, r.scheme)
 	return nameService
 }
@@ -214,6 +246,7 @@ func (r *ReconcileRocketmq) brokerForRocketmq(rocketmq *rocketmqv1alpha1.Rocketm
 		},
 		Spec: rocketmq.Spec.Broker,
 	}
+	broker.Spec.RocketMQName = rocketmq.Name
 	controllerutil.SetControllerReference(rocketmq, broker, r.scheme)
 	return broker
 }

@@ -223,7 +223,10 @@ func (r *ReconcileNameService) updateNameServiceStatus(instance *rocketmqv1alpha
 		}
 
 		// use admin tool to update broker config
-		if actual.IsNameServersStrUpdated && (len(oldNameServerListStr) > cons.MinIpListLength) && (len(actual.NameServersStr) > cons.MinIpListLength) {
+		if actual.IsNameServersStrUpdated &&
+			(len(oldNameServerListStr) > cons.MinIpListLength) &&
+			(len(actual.NameServersStr) > cons.MinIpListLength) &&
+			actual.NameServersStr != oldNameServerListStr {
 			mqAdmin := cons.AdminToolDir
 			subCmd := cons.UpdateBrokerConfig
 			key := cons.ParamNameServiceAddress
