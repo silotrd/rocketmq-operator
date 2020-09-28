@@ -252,6 +252,7 @@ func (r *ReconcileRocketmq) consoleForRocketmq(rocketmq *rocketmqv1alpha1.Rocket
 			NameServers: rocketmq.Spec.Console.NameServers,
 		},
 	}
+	console.Spec.RocketMQName = rocketmq.Name
 	controllerutil.SetControllerReference(rocketmq, console, r.scheme)
 	return console
 }

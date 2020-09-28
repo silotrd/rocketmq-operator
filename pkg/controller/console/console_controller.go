@@ -122,18 +122,20 @@ func (r *ReconcileConsole) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	actualKey := instance.Namespace + "-" + instance.Spec.RocketMQName
+	actual, _ := share.GetInstance().Load(actualKey)
+
 	if instance.Spec.NameServers == "" {
 		// wait for name server ready if nameServers is omitted
 		for {
-			if share.IsNameServersStrInitialized {
+			actual, _ = share.GetInstance().Load(actualKey)
+			if actual.IsNameServersStrInitialized {
 				break
 			} else {
 				log.Info("Waiting for name server ready...")
 				time.Sleep(time.Duration(cons.WaitForNameServerReadyInSecond) * time.Second)
 			}
 		}
-	} else {
-		share.NameServersStr = instance.Spec.NameServers
 	}
 
 	consoleDeployment := r.newDeploymentForCR(instance)
@@ -179,9 +181,11 @@ func (r *ReconcileConsole) Reconcile(request reconcile.Request) (reconcile.Resul
 
 // newDeploymentForCR returns a deployment pod with modifying the ENV
 func (r *ReconcileConsole) newDeploymentForCR(cr *rocketmqv1alpha1.Console) *appsv1.Deployment {
+	actualKey := cr.Namespace + "-" + cr.Spec.RocketMQName
+	actual, _ := share.GetInstance().Load(actualKey)
 	env := corev1.EnvVar{
 		Name:  "JAVA_OPTS",
-		Value: fmt.Sprintf("-Drocketmq.namesrv.addr=%s -Dcom.rocketmq.sendMessageWithVIPChannel=false", share.NameServersStr),
+		Value: fmt.Sprintf("-Drocketmq.namesrv.addr=%s -Dcom.rocketmq.sendMessageWithVIPChannel=false", actual.NameServersStr),
 	}
 	selectLabels, matchLabels := func() (map[string]string, map[string]string) {
 		selectorLabels := cr.Spec.ConsoleDeployment.Spec.Selector.MatchLabels

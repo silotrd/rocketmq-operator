@@ -34,6 +34,8 @@ type ConsoleSpec struct {
 	ConsoleDeployment v1.Deployment `json:"consoleDeployment"`
 	// NameServers defines the name service list e.g. 192.168.1.1:9876;192.168.1.2:9876
 	NameServers string `json:"nameServers,omitempty"`
+	// RocketMQName , rocket mq's name
+	RocketMQName string `json:"rocketMQName"`
 }
 
 // ConsoleStatus defines the observed state of Console
