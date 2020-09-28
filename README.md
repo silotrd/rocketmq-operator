@@ -473,37 +473,31 @@ spec:
           resources:
             requests:
               storage: 1Gi
----
-apiVersion: rocketmq.apache.org/v1alpha1
-kind: Console
-metadata:
-  name: console
-  namespace: default
-spec:
-  # nameServers is the [ip:port] list of name service
-  nameServers: ""
-  # consoleDeployment define the console deployment
-  consoleDeployment:
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: rocketmq-console
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: rocketmq-console
-      template:
+  console:
+      # nameServers is the [ip:port] list of name service
+      nameServers: ""
+      # consoleDeployment define the console deployment
+      consoleDeployment:
+        apiVersion: apps/v1
+        kind: Deployment
         metadata:
           labels:
             app: rocketmq-console
         spec:
-          containers:
-            - name: console
-              image: apacherocketmq/rocketmq-console:2.0.0
-              ports:
-                - containerPort: 8080
+          replicas: 1
+          selector:
+            matchLabels:
+              app: rocketmq-console
+          template:
+            metadata:
+              labels:
+                app: rocketmq-console
+            spec:
+              containers:
+                - name: console
+                  image: apacherocketmq/rocketmq-console:2.0.0
+                  ports:
+                    - containerPort: 8080
 ```
 
 The yaml defines the RocketMQ name server and broker cluster scale, the [ip:port] list of name service and so on. By default, the nameServers is an empty string which means it is automatically obtained by the operator.
