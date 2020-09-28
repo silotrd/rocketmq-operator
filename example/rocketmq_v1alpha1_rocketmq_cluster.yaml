@@ -141,6 +141,24 @@ spec:
         operator: "Equal"
         value: "value2"
         effect: "NoExecute"
+    exporter:
+      enabled: true
+      env:
+        - name: WEB_TELEMETRY_PATH
+          value: /metrics
+        - name: ROCKETMQ_VERSION
+          value: V4_3_2
+        - name: NAMESRV_ADDR
+          value: 127.0.0.1:9876
+      image: miaolinjie/rocketmq-exporter:latest
+      imagePullPolicy: Always
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+        limits:
+          memory: "1024Mi"
+          cpu: "500m"
     #  Set DNS policy for the pod.
     #  Defaults to "ClusterFirst".
     #  Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'.

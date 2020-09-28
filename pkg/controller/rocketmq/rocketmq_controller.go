@@ -104,7 +104,7 @@ func (r *ReconcileRocketmq) Reconcile(request reconcile.Request) (reconcile.Resu
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			actualKey := instance.Namespace + "-" + instance.ObjectMeta.Name
+			actualKey := request.Namespace + "-" + request.Name
 			share.GetInstance().Delete(actualKey)
 			return reconcile.Result{}, nil
 		}
